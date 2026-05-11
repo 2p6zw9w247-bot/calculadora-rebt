@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="description" content="Calculadora de caída de tensión según REBT ITC-BT-19 — normativa eléctrica española">
+<meta name="theme-color" content="#f7f8f3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="CDT REBT">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Caída de Tensión — REBT</title>
+<style>
+  :root {
+    --olive:    #6e7f32;
+    --olive-dk: #4a5620;
+    --olive-lt: #8fa040;
+    --yellow:   #d4ae00;
+    --yellow-lt:#f0c800;
+    --bg:       #f4f5ee;
+    --bg2:      #ffffff;
+    --bg3:      #f9faf4;
+    --card:     #ffffff;
+    --card2:    #f1f2ea;
+    --accent:   #6e7f32;
+    --accent2:  #4a5620;
+    --ok:       #3a6b2a;
+    --warn:     #8a6200;
+    --err:      #b91c1c;
+    --ok-bg:    #eef6e8;
+    --warn-bg:  #fdf7e0;
+    --err-bg:   #fff5f5;
+    --ok-bdr:   #a5d08a;
+    --warn-bdr: #e8c83a;
+    --err-bdr:  #fca5a5;
+    --text:     #1e2414;
+    --text2:    #4a5228;
+    --text3:    #8a9460;
+    --border:   #dde0cc;
+    --border2:  #c4c9a8;
+    --radius:   10px;
+    --radius-sm:7px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  /* HEADER */
+  .app-header {
+    background: var(--olive-dk);
+    border-bottom: 3px solid var(--yellow);
+    padding: 0 1.25rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 56px;
+  }
+  .app-logo {
+    height: 38px;
+    width: auto;
+    flex-shrink: 0;
+    display: block;
+  }
+  .app-header-sep {
+    width: 1px;
+    height: 28px;
+    background: rgba(255,255,255,0.2);
+    flex-shrink: 0;
+  }
+  .app-header-text { flex: 1; }
+  .app-header-text h1 { font-size: 14px; font-weight: 600; color: #ffffff; letter-spacing: -0.01em; }
+  .app-header-text p  { font-size: 10px; color: rgba(255,255,255,0.55); margin-top: 1px; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    margin: 1rem 1.25rem 0;
+    background: var(--card2);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    border: 1px solid var(--border);
+  }
+  .tab {
+    flex: 1; padding: 7px 6px;
+    font-size: 13px; font-weight: 500;
+    border: none; border-radius: 5px;
+    background: transparent; color: var(--text3);
+    cursor: pointer; transition: all 0.15s;
+    text-align: center;
+  }
+  .tab.active {
+    background: var(--olive);
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  /* MAIN CONTENT */
+  .content { padding: 1rem 1.25rem; max-width: 700px; margin: 0 auto; }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-size: 10px; font-weight: 700;
+    color: var(--olive); text-transform: uppercase;
+    letter-spacing: 0.1em; margin: 1.25rem 0 0.55rem;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    margin-bottom: 0.65rem;
+  }
+
+  /* FIELDS */
+  .field { margin-bottom: 0.8rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field label {
+    display: block; font-size: 11.5px;
+    color: var(--text2); margin-bottom: 4px;
+    font-weight: 600; letter-spacing: 0.01em;
+  }
+  .field input, .field select {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 14px;
+    padding: 8px 11px;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field input:focus, .field select:focus {
+    outline: none;
+    border-color: var(--olive);
+    box-shadow: 0 0 0 3px rgba(110,127,50,0.15);
+    background: #fff;
+  }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%238a9460' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 11px center;
+    padding-right: 30px;
+  }
+  .field-row  { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .hint { font-size: 11px; color: var(--text3); margin-top: 4px; line-height: 1.45; }
+
+  /* CALC BUTTON */
+  .btn-calc {
+    width: 100%; margin-top: 0.9rem;
+    background: var(--olive);
+    color: #fff; border: none;
+    border-radius: var(--radius);
+    font-size: 14px; font-weight: 700;
+    padding: 12px;
+    cursor: pointer; letter-spacing: 0.02em;
+    transition: background 0.15s, transform 0.1s;
+    border-bottom: 3px solid var(--olive-dk);
+  }
+  .btn-calc:hover  { background: var(--olive-lt); }
+  .btn-calc:active { transform: scale(0.99); border-bottom-width: 1px; }
+
+  /* RESULTS */
+  .results-area { margin-top: 1.25rem; }
+  .metrics-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; margin-bottom: 0.65rem; }
+  .metric {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.9rem 0.5rem;
+    text-align: center;
+  }
+  .metric-label { font-size: 10px; font-weight: 600; color: var(--text3); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .metric-value { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+  .metric-unit  { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .metric-value.ok   { color: var(--ok); }
+  .metric-value.warn { color: var(--warn); }
+  .metric-value.err  { color: var(--err); }
+
+  /* STATUS BAR */
+  .status-bar {
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 0.65rem;
+  }
+  .status-bar.ok   { background: var(--ok-bg);   color: var(--ok);   border: 1px solid var(--ok-bdr); }
+  .status-bar.warn { background: var(--warn-bg);  color: var(--warn); border: 1px solid var(--warn-bdr); }
+  .status-bar.err  { background: var(--err-bg);   color: var(--err);  border: 1px solid var(--err-bdr); }
+  .status-icon { font-size: 16px; flex-shrink: 0; }
+
+  /* DETAIL TABLE */
+  .detail-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .detail-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 1rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 12.5px;
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row:nth-child(even) { background: var(--bg3); }
+  .detail-key { color: var(--text2); }
+  .detail-val { font-weight: 600; color: var(--text); }
+  .detail-val.ok  { color: var(--ok); }
+  .detail-val.err { color: var(--err); }
+
+  /* FORMULAS */
+  .formula-card {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--yellow);
+    border-radius: var(--radius);
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.65rem;
+  }
+  .formula-title { font-size: 10px; font-weight: 700; color: var(--olive); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+  .formula-line  { font-size: 12px; color: var(--text2); line-height: 1.75; font-family: 'SF Mono', 'Consolas', monospace; }
+  .formula-line strong { color: var(--olive-dk); font-weight: 700; }
+
+  /* LIMITS TABLE */
+  .limits-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .limits-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    padding: 8px 1rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    align-items: center;
+  }
+  .limits-row:last-child { border-bottom: none; }
+  .limits-row:nth-child(even) { background: var(--bg3); }
+  .limits-row.header { background: var(--olive-dk); font-weight: 700; font-size: 10px; color: rgba(255,255,255,0.75); text-transform: uppercase; letter-spacing: 0.06em; }
+  .limits-row.header .tipo { color: rgba(255,255,255,0.9); }
+  .limits-row .tipo { color: var(--text); }
+  .limits-row .pct  { text-align: center; font-weight: 700; }
+  .limits-row .pct.ok  { color: var(--ok); }
+  .limits-row .pct.med { color: var(--warn); }
+
+  /* HIDDEN */
+  .hidden { display: none !important; }
+
+  /* INSTALL BANNER */
+  .install-banner {
+    background: #f0f4e4;
+    border: 1px solid var(--border2);
+    border-left: 3px solid var(--yellow);
+    border-radius: var(--radius);
+    padding: 0.7rem 1rem;
+    margin-bottom: 0.75rem;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--olive-dk);
+  }
+  .install-banner button {
+    margin-left: auto; flex-shrink: 0;
+    background: var(--olive); color: #fff;
+    border: none; border-radius: 6px;
+    padding: 5px 12px; font-size: 12px; font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 480px) {
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+    .metrics-grid .metric:last-child { grid-column: span 2; }
+    .field-row3 { grid-template-columns: 1fr 1fr; }
+    .field-row3 .field:last-child { grid-column: span 2; }
+    .app-header { padding: 0 1rem; }
+    .content    { padding: 0.85rem 1rem; }
+    .tabs       { margin: 0.85rem 1rem 0; }
+    .app-logo   { height: 30px; }
+  }
+  @media (min-width: 700px) {
+    .main-grid    { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; }
+    .results-area { margin-top: 0; }
+  }
+
+  /* INFORME */
+  .inf-doc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .inf-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--olive); }
+  .inf-header-logo { font-size: 18px; font-weight: 700; color: var(--olive-dk); }
+  .inf-header-meta { text-align: right; font-size: 11px; color: var(--text2); }
+  .inf-title { font-size: 15px; font-weight: 700; color: var(--olive-dk); margin-bottom: 0.15rem; }
+  .inf-subtitle { font-size: 11px; color: var(--text3); }
+  .inf-section { margin: 1.25rem 0 0.5rem; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--olive); border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+  .inf-table { width: 100%; border-collapse: collapse; margin-bottom: 0.75rem; }
+  .inf-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); font-size: 12px; vertical-align: top; }
+  .inf-table td:first-child { color: var(--text2); width: 55%; }
+  .inf-table td:last-child { font-weight: 600; color: var(--text); }
+  .inf-table tr:nth-child(even) td { background: var(--bg3); }
+  .inf-step { background: var(--card2); border-left: 3px solid var(--yellow); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 0.65rem 0.85rem; margin-bottom: 0.5rem; }
+  .inf-step-num { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--olive); margin-bottom: 3px; }
+  .inf-step-formula { font-family: 'SF Mono','Consolas',monospace; font-size: 11.5px; color: var(--text2); margin: 2px 0; }
+  .inf-step-formula strong { color: var(--olive-dk); }
+  .inf-step-result { font-family: 'SF Mono','Consolas',monospace; font-size: 12px; font-weight: 700; color: var(--text); margin-top: 4px; }
+  .inf-verdict { border-radius: var(--radius); padding: 0.75rem 1rem; font-size: 13px; font-weight: 700; margin-top: 1rem; display: flex; align-items: center; gap: 8px; }
+  .inf-verdict.ok  { background: var(--ok-bg);  color: var(--ok);  border: 1px solid var(--ok-bdr); }
+  .inf-verdict.err { background: var(--err-bg); color: var(--err); border: 1px solid var(--err-bdr); }
+  .inf-footer { margin-top: 1.5rem; padding-top: 0.75rem; border-top: 1px solid var(--border); font-size: 10px; color: var(--text3); text-align: center; }
+
+  @media print {
+    .app-header, .tabs, #installBanner, .btn-calc, .field, .card:not(.inf-doc), .section-title { display: none !important; }
+    #panel-calc, #panel-ref, #panel-cc, #panel-bat { display: none !important; }
+    #panel-inf { display: block !important; }
+    #inf-empty { display: none !important; }
+    #inf-content { display: block !important; }
+    .content { padding: 0 !important; }
+    .inf-doc { border: none; padding: 0; }
+    body { background: white; }
+    button { display: none !important; }
+  }
+
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <img src="data:image/png;base64,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" alt="iEnergies" class="app-logo">
+  <div class="app-header-sep"></div>
+  <div class="app-header-text">
+    <h1>Calculadora de Caída de Tensión</h1>
+    <p>REBT · ITC-BT-19 · ITC-BT-15 · Normativa española</p>
+  </div>
+</header>
+
+<div id="installBanner" class="content hidden" style="padding-top:1rem;padding-bottom:0">
+  <div class="install-banner">
+    <span>📲 Instala la app para usarla sin conexión</span>
+    <button onclick="installApp()">Instalar</button>
+  </div>
+</div>
+
+<div class="tabs" style="margin-top:1rem">
+  <button class="tab active" id="tab-calc" onclick="setTab('calc')">🔢 CA — REBT</button>
+  <button class="tab" id="tab-cc" onclick="setTab('cc')">☀️ CC — FV</button>
+  <button class="tab" id="tab-bat" onclick="setTab('bat')">🔋 Baterías</button>
+  <button class="tab" id="tab-inf" onclick="setTab('inf')">📄 Informe</button>
+  <button class="tab" id="tab-ref" onclick="setTab('ref')">📋 Referencia</button>
+</div>
+
+<!-- ===== CALCULADORA ===== -->
+<div id="panel-calc" class="content">
+
+  <div id="installPlaceholder"></div>
+
+  <div class="main-grid">
+    <!-- INPUTS -->
+    <div>
+      <div class="section-title">Modo de cálculo</div>
+      <div class="tabs" style="margin:0 0 0.75rem">
+        <button class="tab active" id="subtab-sec" onclick="setSubTab('seccion')">Calcular sección</button>
+        <button class="tab" id="subtab-cdt" onclick="setSubTab('cdt')">Calcular CDT</button>
+      </div>
+
+      <div class="card">
+        <div class="field">
+          <label>Sistema eléctrico</label>
+          <select id="sistema" onchange="onSistemaChange()">
+            <option value="mono">Monofásico — 230 V (L+N)</option>
+            <option value="tri">Trifásico — 400 V (L1+L2+L3+N)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Tipo de instalación / uso</label>
+          <select id="uso" onchange="onUsoChange()">
+            <option value="der_ind_parcial">D.I. — Contadores parcialmente concentrados (≤0,5%)</option>
+            <option value="der_ind">D.I. — Contadores totalmente concentrados (≤1%)</option>
+            <option value="der_ind_unico">D.I. — Único usuario sin LGA (≤1,5%)</option>
+            <option value="vivienda">Vivienda, oficina o local (interior)</option>
+            <option value="alumbrado">Alumbrado (interior o exterior)</option>
+            <option value="fuerza">Fuerza / motor (no vivienda)</option>
+            <option value="ind_alum">Industrial desde trafo propio — alumbrado</option>
+            <option value="ind_fuerza">Industrial desde trafo propio — fuerza</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-title">Circuito</div>
+      <div class="card">
+        <div class="field">
+          <label>Potencia (W)</label>
+          <div style="display:flex;gap:8px;align-items:stretch">
+            <input type="number" id="potencia" value="2000" min="0" step="100" inputmode="decimal" oninput="onPotenciaChange()" style="flex:1;min-width:0">
+            <select id="potencia-preset" onchange="onPresetPotencia()" style="width:auto;padding-right:28px;flex-shrink:0;font-size:12px;color:var(--text2)" title="Potencias normalizadas">
+              <option value="" disabled selected>Predef.</option>
+            </select>
+          </div>
+          <div class="hint" id="hint-potencia">Intensidades normalizadas (10–63 A) a cosφ=1 · editable manualmente</div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Factor de potencia (cos φ)</label>
+            <input type="number" id="cosphi" value="1.00" min="0.05" max="1" step="0.01" inputmode="decimal" oninput="onPotenciaChange()">
+            <div class="hint">1,00 resistivo · 0,85 motor</div>
+          </div>
+          <div class="field">
+            <label>Intensidad (A)</label>
+            <input type="number" id="intensidad" value="8.70" min="0" step="0.01" inputmode="decimal">
+            <div class="hint">Se calcula desde P y cosφ</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Longitud del circuito (m)</label>
+          <input type="number" id="longitud" value="20" min="0.1" step="1" inputmode="decimal">
+          <div class="hint">Distancia real del conductor (ida)</div>
+        </div>
+      </div>
+
+      <div class="section-title">Conductor</div>
+      <div class="card">
+        <div class="field-row">
+          <div class="field">
+            <label>Material</label>
+            <select id="conductor">
+              <option value="Cu">Cobre (Cu) — γ=56</option>
+              <option value="Al">Aluminio (Al) — γ=35</option>
+            </select>
+          </div>
+          <div class="field" id="seccion-field">
+            <label>Sección (mm²)</label>
+            <select id="seccion">
+              <option value="1.5">1,5</option>
+              <option value="2.5">2,5</option>
+              <option value="4">4</option>
+              <option value="6">6</option>
+              <option value="10">10</option>
+              <option value="16">16</option>
+              <option value="25">25</option>
+              <option value="35">35</option>
+              <option value="50">50</option>
+              <option value="70">70</option>
+              <option value="95">95</option>
+              <option value="120">120</option>
+              <option value="150">150</option>
+              <option value="185">185</option>
+              <option value="240">240</option>
+            </select>
+            <div class="hint" id="seccion-hint">Selecciona sección conocida</div>
+          </div>
+        </div>
+        <div class="field">
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            <span>CDT máxima admisible (%)</span>
+            <span id="cdt-auto-badge" style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:rgba(79,142,247,0.15);color:var(--accent);letter-spacing:0.04em">AUTO</span>
+          </label>
+          <input type="number" id="cdtMax" value="0.5" min="0.5" max="15" step="0.5" inputmode="decimal" oninput="onCdtMaxManual()">
+          <div class="hint" id="hint-cdt">ITC-BT-15: ≤0,5% — contadores concentrados en más de un lugar</div>
+          <div id="cdt-manual-note" style="display:none;margin-top:5px;font-size:11px;color:var(--warn);display:flex;align-items:center;gap:5px">
+            <span>⚠</span><span>Valor modificado manualmente — <button onclick="resetCdtAuto()" style="background:none;border:none;color:var(--accent);font-size:11px;cursor:pointer;padding:0;text-decoration:underline">restaurar automático</button></span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-calc" onclick="calcular()">⚡ Calcular</button>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results-area" id="results-area">
+      <div class="section-title">Resultados</div>
+
+      <div class="metrics-grid">
+        <div class="metric">
+          <div class="metric-label">Caída tensión</div>
+          <div class="metric-value" id="r-cdt">—</div>
+          <div class="metric-unit">%</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Tensión caída</div>
+          <div class="metric-value" id="r-v">—</div>
+          <div class="metric-unit">V</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label" id="r-sec-label">Sección mínima</div>
+          <div class="metric-value" id="r-sec">—</div>
+          <div class="metric-unit">mm²</div>
+        </div>
+      </div>
+
+      <div id="status-bar" class="status-bar ok hidden">
+        <span class="status-icon" id="status-icon">✅</span>
+        <span id="status-msg">—</span>
+      </div>
+
+      <div class="detail-card" id="detail-card" style="display:none">
+        <div class="detail-row"><span class="detail-key">Sistema</span><span class="detail-val" id="d-sistema">—</span></div>
+        <div class="detail-row"><span class="detail-key">Tensión nominal</span><span class="detail-val" id="d-tension">—</span></div>
+        <div class="detail-row"><span class="detail-key">Potencia</span><span class="detail-val" id="d-pot">—</span></div>
+        <div class="detail-row"><span class="detail-key">Intensidad</span><span class="detail-val" id="d-int">—</span></div>
+        <div class="detail-row"><span class="detail-key">cos φ</span><span class="detail-val" id="d-cosphi">—</span></div>
+        <div class="detail-row"><span class="detail-key">Longitud</span><span class="detail-val" id="d-long">—</span></div>
+        <div class="detail-row"><span class="detail-key">Conductor / γ</span><span class="detail-val" id="d-cond">—</span></div>
+        <div class="detail-row"><span class="detail-key">Sección calculada</span><span class="detail-val" id="d-scalc">—</span></div>
+        <div class="detail-row"><span class="detail-key">Sección normalizada</span><span class="detail-val" id="d-snorm">—</span></div>
+        <div class="detail-row"><span class="detail-key">CDT con sección norm.</span><span class="detail-val" id="d-cdtnorm">—</span></div>
+        <div class="detail-row"><span class="detail-key">CDT máximo admisible</span><span class="detail-val" id="d-cdtmax">—</span></div>
+        <div class="detail-row"><span class="detail-key">Cumple ITC-BT-19</span><span class="detail-val" id="d-cumple">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ===== CC FOTOVOLTAICA ===== -->
+<div id="panel-cc" class="content hidden">
+
+  <div class="main-grid">
+
+    <!-- COLUMNA IZQUIERDA: INPUTS -->
+    <div>
+
+      <div class="section-title">Datos del módulo fotovoltaico</div>
+      <div class="card">
+        <div class="field-row">
+          <div class="field">
+            <label>Vmpp unitario (V)</label>
+            <input type="number" id="cc-vmpp-panel" value="40" min="1" step="0.1" inputmode="decimal" oninput="calcCcDerived()">
+            <div class="hint">Tensión MPP de un solo panel (hoja de módulo)</div>
+          </div>
+          <div class="field">
+            <label>Impp unitario (A)</label>
+            <input type="number" id="cc-impp-panel" value="10" min="0.1" step="0.1" inputmode="decimal" oninput="calcCcDerived()">
+            <div class="hint">Corriente MPP de un solo panel (hoja de módulo)</div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Nº paneles en serie</label>
+            <input type="number" id="cc-nserie" value="10" min="1" step="1" inputmode="numeric" oninput="calcCcDerived()">
+            <div class="hint">Paneles por string</div>
+          </div>
+          <div class="field">
+            <label>Nº strings en paralelo</label>
+            <input type="number" id="cc-nparalelo" value="1" min="1" step="1" inputmode="numeric" oninput="calcCcDerived()">
+            <div class="hint">Strings conectados al mismo inversor</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Valores del generador (calculados)</div>
+      <div class="card" style="background:var(--card2)">
+        <div class="field-row">
+          <div class="field">
+            <label>Tensión string Vmpp (V)</label>
+            <input type="number" id="cc-vmpp" value="400" min="1" step="0.1" inputmode="decimal" style="font-weight:600;color:var(--olive-dk)">
+            <div class="hint">Vmpp panel × nº serie</div>
+          </div>
+          <div class="field">
+            <label>Corriente total Impp (A)</label>
+            <input type="number" id="cc-impp" value="10" min="0.1" step="0.01" inputmode="decimal" style="font-weight:600;color:var(--olive-dk)">
+            <div class="hint">Impp panel × nº paralelos</div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Potencia total (W)</label>
+            <input type="number" id="cc-potencia" value="4000" readonly style="background:var(--bg3);color:var(--text3)">
+            <div class="hint">Vmpp string × Impp total</div>
+          </div>
+          <div class="field">
+            <label>Intensidad de cálculo (A)</label>
+            <input type="number" id="cc-icalc" value="12.50" readonly style="background:var(--bg3);color:var(--text3)">
+            <div class="hint">Impp total × 1,25 (ITC-BT-40)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Conductor y distancia</div>
+      <div class="card">
+        <div class="field">
+          <label>Material conductor</label>
+          <select id="cc-cond">
+            <option value="Cu">Cobre (Cu) — γ = 56 m/Ω·mm²</option>
+            <option value="Al">Aluminio (Al) — γ = 35 m/Ω·mm²</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Distancia paneles → inversor (m)</label>
+          <input type="number" id="cc-longitud" value="20" min="0.1" step="1" inputmode="decimal">
+          <div class="hint">Distancia real de ida — la fórmula aplica × 2 (bifilar)</div>
+        </div>
+      </div>
+
+      <div class="section-title">Límite normativo</div>
+      <div class="card">
+        <div class="field">
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            <span>CDT máxima admisible (%)</span>
+            <span id="cc-cdt-badge" style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:rgba(110,127,50,0.12);color:var(--olive);letter-spacing:0.04em">AUTO</span>
+          </label>
+          <input type="number" id="cc-cdtmax" value="1.5" min="0.5" max="10" step="0.5" inputmode="decimal" oninput="onCcCdtManual()">
+          <div id="cc-cdt-manual-note" style="display:none;margin-top:5px;font-size:11px;color:var(--warn);align-items:center;gap:5px">
+            <span>⚠</span><span>Valor modificado manualmente — <button onclick="resetCcCdtAuto()" style="background:none;border:none;color:var(--accent);font-size:11px;cursor:pointer;padding:0;text-decoration:underline">restaurar automático</button></span>
+          </div>
+          <div class="hint">ITC-BT-40 ap.5 y pliego IDAE: ≤ 1,5% paneles → inversor</div>
+        </div>
+        <div class="field">
+          <label>Sección conocida (mm²) — solo para calcular CDT</label>
+          <select id="cc-seccion">
+            <option value="1.5">1,5</option>
+            <option value="2.5">2,5</option>
+            <option value="4">4</option>
+            <option value="6">6</option>
+            <option value="10">10</option>
+            <option value="16">16</option>
+            <option value="25">25</option>
+            <option value="35">35</option>
+            <option value="50">50</option>
+            <option value="70">70</option>
+            <option value="95">95</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="tabs" style="margin:0.75rem 0">
+        <button class="tab active" id="cc-subtab-sec" onclick="setCcSubTab('seccion')">Calcular sección</button>
+        <button class="tab" id="cc-subtab-cdt" onclick="setCcSubTab('cdt')">Calcular CDT</button>
+      </div>
+
+      <button class="btn-calc" onclick="calcularCC()">☀️ Calcular CC</button>
+    </div>
+
+    <!-- COLUMNA DERECHA: RESULTADOS -->
+    <div class="results-area" id="cc-results-area">
+      <div class="section-title">Resultados</div>
+
+      <div class="metrics-grid">
+        <div class="metric">
+          <div class="metric-label">Caída tensión</div>
+          <div class="metric-value" id="cc-r-cdt">—</div>
+          <div class="metric-unit">%</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Tensión caída</div>
+          <div class="metric-value" id="cc-r-v">—</div>
+          <div class="metric-unit">V</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label" id="cc-r-sec-label">Sección mínima</div>
+          <div class="metric-value" id="cc-r-sec">—</div>
+          <div class="metric-unit">mm²</div>
+        </div>
+      </div>
+
+      <div id="cc-status-bar" class="status-bar ok hidden">
+        <span class="status-icon" id="cc-status-icon">✅</span>
+        <span id="cc-status-msg">—</span>
+      </div>
+
+      <div class="detail-card" id="cc-detail-card" style="display:none">
+        <div class="detail-row"><span class="detail-key">Tramo</span><span class="detail-val" id="cc-d-tramo">—</span></div>
+        <div class="detail-row"><span class="detail-key">Tensión string Vmpp</span><span class="detail-val" id="cc-d-vmpp">—</span></div>
+        <div class="detail-row"><span class="detail-key">Corriente total Impp</span><span class="detail-val" id="cc-d-impp">—</span></div>
+        <div class="detail-row"><span class="detail-key">Configuración generador</span><span class="detail-val" id="cc-d-nstr">—</span></div>
+        <div class="detail-row"><span class="detail-key">Intensidad de cálculo (×1,25)</span><span class="detail-val" id="cc-d-icalc">—</span></div>
+        <div class="detail-row"><span class="detail-key">Longitud tramo (ida)</span><span class="detail-val" id="cc-d-long">—</span></div>
+        <div class="detail-row"><span class="detail-key">Conductor / γ</span><span class="detail-val" id="cc-d-cond">—</span></div>
+        <div class="detail-row"><span class="detail-key">Sección calculada</span><span class="detail-val" id="cc-d-scalc">—</span></div>
+        <div class="detail-row"><span class="detail-key">Sección normalizada adoptada</span><span class="detail-val" id="cc-d-snorm">—</span></div>
+        <div class="detail-row"><span class="detail-key">CDT con sección adoptada</span><span class="detail-val" id="cc-d-cdtnorm">—</span></div>
+        <div class="detail-row"><span class="detail-key">CDT máxima admisible</span><span class="detail-val" id="cc-d-cdtmax">—</span></div>
+        <div class="detail-row"><span class="detail-key">Cumple ITC-BT-40 / IDAE</span><span class="detail-val" id="cc-d-cumple">—</span></div>
+      </div>
+
+      <div class="formula-card" style="margin-top:0.75rem">
+        <div class="formula-title">Fórmulas CC (circuito bifilar)</div>
+        <div class="formula-line"><strong>CDT (V)</strong> = 2 · L · I<sub>calc</sub> / (γ · S)</div>
+        <div class="formula-line"><strong>CDT (%)</strong> = CDT(V) / V<sub>mpp</sub> × 100</div>
+        <div class="formula-line"><strong>S (mm²)</strong> = 2 · L · I<sub>calc</sub> / (γ · ΔV<sub>max</sub>)</div>
+        <div class="formula-line">V<sub>string</sub> = V<sub>mpp panel</sub> × n<sub>serie</sub> · I<sub>total</sub> = I<sub>mpp panel</sub> × n<sub>paralelo</sub></div>
+        <div class="formula-line">I<sub>calc</sub> = I<sub>total</sub> × 1,25 (ITC-BT-40 ap.5)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== BATERÍAS — INVERSOR ===== -->
+<div id="panel-bat" class="content hidden">
+
+  <div class="main-grid">
+
+    <!-- COLUMNA IZQUIERDA: INPUTS -->
+    <div>
+
+      <div class="section-title">Tipo de sistema</div>
+      <div class="card">
+        <div class="field">
+          <label>Tipo de instalación</label>
+          <select id="bat-tipo" onchange="onBatTipoChange()">
+            <option value="aislado">Aislado (off-grid) — sin conexión a red</option>
+            <option value="hibrido">Híbrido — con conexión a red + batería</option>
+          </select>
+          <div class="hint" id="bat-tipo-hint">Sistemas con batería como única fuente de energía</div>
+        </div>
+      </div>
+
+      <div class="section-title">Datos del inversor</div>
+      <div class="card">
+        <div class="field">
+          <label>Potencia nominal del inversor (W)</label>
+          <input type="number" id="bat-potencia" value="3000" min="100" step="100" inputmode="decimal" oninput="calcBatDerived()">
+          <div class="hint">Potencia nominal de salida CA (dato de ficha técnica)</div>
+        </div>
+        <div class="field">
+          <label>Rendimiento del inversor (η %)</label>
+          <input type="number" id="bat-rend" value="95" min="50" max="100" step="0.5" inputmode="decimal" oninput="calcBatDerived()">
+          <div class="hint">Típico: 92–98% — consultar ficha técnica del inversor</div>
+        </div>
+      </div>
+
+      <div class="section-title">Datos del banco de baterías</div>
+      <div class="card">
+        <div class="field-row">
+          <div class="field">
+            <label>Tensión nominal (V)</label>
+            <select id="bat-tension" onchange="calcBatDerived()">
+              <option value="12">12 V</option>
+              <option value="24">24 V</option>
+              <option value="48" selected>48 V</option>
+              <option value="96">96 V</option>
+              <option value="120">120 V</option>
+              <option value="custom">Otra…</option>
+            </select>
+          </div>
+          <div class="field" id="bat-tension-custom-wrap" style="display:none">
+            <label>Tensión (V)</label>
+            <input type="number" id="bat-tension-custom" value="48" min="6" step="1" inputmode="decimal" oninput="calcBatDerived()">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Conductor y distancia</div>
+      <div class="card">
+        <div class="field">
+          <label>Material conductor</label>
+          <select id="bat-cond">
+            <option value="Cu">Cobre (Cu) — γ = 56 m/Ω·mm²</option>
+            <option value="Al">Aluminio (Al) — γ = 35 m/Ω·mm²</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Distancia baterías → inversor (m)</label>
+          <input type="number" id="bat-longitud" value="2" min="0.1" step="0.5" inputmode="decimal">
+          <div class="hint">Distancia real de ida — la fórmula aplica × 2 (bifilar)</div>
+        </div>
+      </div>
+
+      <div class="section-title">Corriente calculada</div>
+      <div class="card" style="background:var(--card2)">
+        <div class="field-row">
+          <div class="field">
+            <label>I nominal CC (A)</label>
+            <input id="bat-inom" value="65.79" readonly style="width:100%;background:var(--bg3);color:var(--olive-dk);font-weight:600;font-size:14px;padding:8px 11px;border:1px solid var(--border2);border-radius:var(--radius-sm)">
+            <div class="hint">P / (V<sub>bat</sub> × η)</div>
+          </div>
+          <div class="field">
+            <label>I de cálculo (×1,25) (A)</label>
+            <input id="bat-icalc" value="82.24" readonly style="width:100%;background:var(--bg3);color:var(--olive-dk);font-weight:700;font-size:14px;padding:8px 11px;border:1px solid var(--yellow);border-radius:var(--radius-sm)">
+            <div class="hint">I<sub>nom</sub> × 1,25 — ITC-BT-40 ap.5</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Límite normativo</div>
+      <div class="card">
+        <div class="field">
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            <span>CDT máxima admisible (%)</span>
+            <span id="bat-cdt-badge" style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:rgba(110,127,50,0.12);color:var(--olive);letter-spacing:0.04em">AUTO</span>
+          </label>
+          <input type="number" id="bat-cdtmax" value="1" min="0.5" max="10" step="0.5" inputmode="decimal" oninput="onBatCdtManual()">
+          <div id="bat-cdt-manual-note" style="display:none;margin-top:5px;font-size:11px;color:var(--warn);align-items:center;gap:5px">
+            <span>⚠</span><span>Valor modificado manualmente — <button onclick="resetBatCdtAuto()" style="background:none;border:none;color:var(--accent);font-size:11px;cursor:pointer;padding:0;text-decoration:underline">restaurar automático</button></span>
+          </div>
+          <div class="hint">Práctica habitual: ≤ 1% en tramo baterías → inversor</div>
+        </div>
+        <div class="field">
+          <label>Sección conocida (mm²) — solo para calcular CDT</label>
+          <select id="bat-seccion">
+            <option value="2.5">2,5</option>
+            <option value="4">4</option>
+            <option value="6">6</option>
+            <option value="10">10</option>
+            <option value="16">16</option>
+            <option value="25">25</option>
+            <option value="35">35</option>
+            <option value="50">50</option>
+            <option value="70">70</option>
+            <option value="95">95</option>
+            <option value="120">120</option>
+            <option value="150">150</option>
+            <option value="185">185</option>
+            <option value="240">240</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="tabs" style="margin:0.75rem 0">
+        <button class="tab active" id="bat-subtab-sec" onclick="setBatSubTab('seccion')">Calcular sección</button>
+        <button class="tab" id="bat-subtab-cdt" onclick="setBatSubTab('cdt')">Calcular CDT</button>
+      </div>
+
+      <button class="btn-calc" onclick="calcularBat()">🔋 Calcular baterías</button>
+    </div>
+
+    <!-- COLUMNA DERECHA: RESULTADOS -->
+    <div class="results-area" id="bat-results-area">
+      <div class="section-title">Resultados</div>
+
+      <div class="metrics-grid">
+        <div class="metric">
+          <div class="metric-label">Caída tensión</div>
+          <div class="metric-value" id="bat-r-cdt">—</div>
+          <div class="metric-unit">%</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Tensión caída</div>
+          <div class="metric-value" id="bat-r-v">—</div>
+          <div class="metric-unit">V</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label" id="bat-r-sec-label">Sección mínima</div>
+          <div class="metric-value" id="bat-r-sec">—</div>
+          <div class="metric-unit">mm²</div>
+        </div>
+      </div>
+
+      <div id="bat-status-bar" class="status-bar ok hidden">
+        <span class="status-icon" id="bat-status-icon">✅</span>
+        <span id="bat-status-msg">—</span>
+      </div>
+
+      <div class="detail-card" id="bat-detail-card" style="display:none">
+        <div class="detail-row"><span class="detail-key">Tipo de sistema</span><span class="detail-val" id="bat-d-tipo">—</span></div>
+        <div class="detail-row"><span class="detail-key">Potencia inversor</span><span class="detail-val" id="bat-d-pot">—</span></div>
+        <div class="detail-row"><span class="detail-key">Rendimiento (η)</span><span class="detail-val" id="bat-d-rend">—</span></div>
+        <div class="detail-row"><span class="detail-key">Tensión nominal baterías</span><span class="detail-val" id="bat-d-vbat">—</span></div>
+        <div class="detail-row"><span class="detail-key">Corriente nominal CC</span><span class="detail-val" id="bat-d-inom">—</span></div>
+        <div class="detail-row"><span class="detail-key">Corriente de cálculo (×1,25)</span><span class="detail-val" id="bat-d-icalc">—</span></div>
+        <div class="detail-row"><span class="detail-key">Longitud tramo (ida)</span><span class="detail-val" id="bat-d-long">—</span></div>
+        <div class="detail-row"><span class="detail-key">Conductor / γ</span><span class="detail-val" id="bat-d-cond">—</span></div>
+        <div class="detail-row"><span class="detail-key">Sección calculada</span><span class="detail-val" id="bat-d-scalc">—</span></div>
+        <div class="detail-row"><span class="detail-key">Sección normalizada adoptada</span><span class="detail-val" id="bat-d-snorm">—</span></div>
+        <div class="detail-row"><span class="detail-key">CDT con sección adoptada</span><span class="detail-val" id="bat-d-cdtnorm">—</span></div>
+        <div class="detail-row"><span class="detail-key">CDT máxima admisible</span><span class="detail-val" id="bat-d-cdtmax">—</span></div>
+        <div class="detail-row"><span class="detail-key">Cumple criterio CDT</span><span class="detail-val" id="bat-d-cumple">—</span></div>
+      </div>
+
+      <div class="formula-card" style="margin-top:0.75rem">
+        <div class="formula-title">Fórmulas — baterías → inversor (bifilar)</div>
+        <div class="formula-line"><strong>I<sub>nom</sub></strong> = P<sub>inv</sub> / (V<sub>bat</sub> × η)</div>
+        <div class="formula-line"><strong>I<sub>calc</sub></strong> = I<sub>nom</sub> × 1,25  (ITC-BT-40 ap.5)</div>
+        <div class="formula-line"><strong>CDT (V)</strong> = 2 · L · I<sub>calc</sub> / (γ · S)</div>
+        <div class="formula-line"><strong>CDT (%)</strong> = CDT(V) / V<sub>bat</sub> × 100</div>
+        <div class="formula-line"><strong>S (mm²)</strong> = 2 · L · I<sub>calc</sub> / (γ · ΔV<sub>max</sub>)</div>
+        <div class="formula-line" style="margin-top:6px;color:var(--text3)">Ref: ITC-BT-40 ap.5 · ITC-BT-53 (borrador) · UNE-HD 60364-7-712</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== INFORME ===== -->
+<div id="panel-inf" class="content hidden">
+
+  <div id="inf-empty" style="text-align:center;padding:3rem 1rem;color:var(--text3)">
+    <div style="font-size:48px;margin-bottom:1rem">📋</div>
+    <div style="font-size:15px;font-weight:600;color:var(--text2);margin-bottom:6px">Sin cálculo realizado</div>
+    <div style="font-size:13px">Ve a la calculadora, introduce los datos y pulsa <strong>Calcular</strong>.<br>El informe aparecerá aquí automáticamente.</div>
+  </div>
+
+  <div id="inf-content" style="display:none">
+
+    <!-- Identificación del proyecto -->
+    <div class="section-title">Identificación</div>
+    <div class="card">
+      <div class="field">
+        <label>Nombre del proyecto / circuito</label>
+        <input type="text" id="inf-proyecto" placeholder="Ej: Circuito C1 — Iluminación planta baja" oninput="renderInforme()">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Referencia</label>
+          <input type="text" id="inf-ref" placeholder="Ej: PR-2025-001" oninput="renderInforme()">
+        </div>
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="inf-fecha" oninput="renderInforme()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Redactado por</label>
+        <input type="text" id="inf-autor" placeholder="Nombre del técnico" oninput="renderInforme()">
+      </div>
+      <div class="field">
+        <label>Observaciones</label>
+        <input type="text" id="inf-obs" placeholder="Notas adicionales (opcional)" oninput="renderInforme()">
+      </div>
+    </div>
+
+    <!-- Botón imprimir -->
+    <button class="btn-calc" onclick="imprimirInforme()" style="margin-bottom:1rem">🖨️ Imprimir / Guardar PDF</button>
+
+    <!-- Vista previa del informe -->
+    <div id="inf-preview" class="inf-doc"></div>
+
+  </div>
+</div>
+
+<!-- ===== REFERENCIA REBT ===== -->
+<div id="panel-ref" class="content hidden">
+
+  <div class="section-title">Fórmulas de cálculo (UNE 20460)</div>
+  <div class="formula-card">
+    <div class="formula-title">Monofásico (230 V)</div>
+    <div class="formula-line"><strong>CDT (V)</strong> = 2 · L · I · cosφ / (γ · S)</div>
+    <div class="formula-line"><strong>CDT (%)</strong> = CDT(V) / 230 × 100</div>
+    <div class="formula-line"><strong>S (mm²)</strong> = 2 · L · I · cosφ / (γ · ΔU<sub>max</sub>)</div>
+  </div>
+  <div class="formula-card">
+    <div class="formula-title">Trifásico (400 V)</div>
+    <div class="formula-line"><strong>CDT (V)</strong> = √3 · L · I · cosφ / (γ · S)</div>
+    <div class="formula-line"><strong>CDT (%)</strong> = CDT(V) / 400 × 100</div>
+    <div class="formula-line"><strong>S (mm²)</strong> = √3 · L · I · cosφ / (γ · ΔU<sub>max</sub>)</div>
+  </div>
+  <div class="formula-card">
+    <div class="formula-title">Parámetros</div>
+    <div class="formula-line">L = longitud del circuito (m) — sólo ida</div>
+    <div class="formula-line">I = intensidad de línea (A)</div>
+    <div class="formula-line">cosφ = factor de potencia (adimensional)</div>
+    <div class="formula-line">γ = conductividad a 20°C: <strong>Cu=56</strong>, <strong>Al=35</strong> (m/Ω·mm²)</div>
+    <div class="formula-line">S = sección del conductor (mm²)</div>
+    <div class="formula-line">ΔU<sub>max</sub> = CDT<sub>max</sub>% / 100 × U<sub>nominal</sub></div>
+  </div>
+
+  <div class="section-title">Límites CC Fotovoltaica — ITC-BT-40 / IDAE</div>
+  <div class="limits-card" style="margin-bottom:0.65rem">
+    <div class="limits-row header" style="grid-template-columns:2fr 1fr">
+      <div>Tramo</div>
+      <div class="pct">CDT máx.</div>
+    </div>
+    <div class="limits-row" style="grid-template-columns:2fr 1fr">
+      <div class="tipo">String / ramal (panel → caja de strings)</div>
+      <div class="pct ok">1,5%</div>
+    </div>
+    <div class="limits-row" style="grid-template-columns:2fr 1fr">
+      <div class="tipo">String directo a inversor</div>
+      <div class="pct ok">1,5%</div>
+    </div>
+    <div class="limits-row" style="grid-template-columns:2fr 1fr">
+      <div class="tipo">Paralelo / principal (caja strings → inversor)</div>
+      <div class="pct ok">1,5%</div>
+    </div>
+  </div>
+  <p style="font-size:11px;color:var(--text3);margin-top:6px;margin-bottom:1rem;line-height:1.5">
+    ITC-BT-40 ap.5 y Pliego de Condiciones Técnicas IDAE (rev. jul. 2011). La intensidad de cálculo en CC es I<sub>mpp</sub> × n<sub>strings</sub> × 1,25. Fórmula bifilar: S = 2·L·I / (γ·ΔV<sub>max</sub>).
+  </p>
+
+  <div class="section-title">Límites ITC-BT-19 (REBT)</div>
+  <div class="limits-card">
+    <div class="limits-row header">
+      <div>Tipo de instalación</div>
+      <div class="pct">Alumb.</div>
+      <div class="pct">Fuerza</div>
+    </div>
+    <div class="limits-row">
+      <div class="tipo">D.I. — Contadores parcialmente concentrados</div>
+      <div class="pct ok">0,5%</div>
+      <div class="pct ok">0,5%</div>
+    </div>
+    <div class="limits-row">
+      <div class="tipo">D.I. — Contadores totalmente concentrados</div>
+      <div class="pct ok">1%</div>
+      <div class="pct ok">1%</div>
+    </div>
+    <div class="limits-row">
+      <div class="tipo">D.I. — Único usuario sin LGA</div>
+      <div class="pct ok">1,5%</div>
+      <div class="pct ok">1,5%</div>
+    </div>
+    <div class="limits-row">
+      <div class="tipo">Viviendas (interior)</div>
+      <div class="pct ok">3%</div>
+      <div class="pct ok">3%</div>
+    </div>
+    <div class="limits-row">
+      <div class="tipo">Otras instalaciones interiores</div>
+      <div class="pct ok">3%</div>
+      <div class="pct med">5%</div>
+    </div>
+    <div class="limits-row">
+      <div class="tipo">Industrial (trafo propio AT)</div>
+      <div class="pct med">4,5%</div>
+      <div class="pct med">6,5%</div>
+    </div>
+    <div class="limits-row">
+      <div class="tipo">Alumbrado exterior (ITC-BT-09)</div>
+      <div class="pct ok">3%</div>
+      <div class="pct" style="color:var(--text3)">—</div>
+    </div>
+  </div>
+  <p style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5">
+    Estos valores pueden compensarse entre tramos (derivación individual + instalación interior) siempre que la caída total no supere la suma de los límites de cada tramo.
+  </p>
+
+  <div class="section-title">Secciones normalizadas (mm²)</div>
+  <div class="limits-card">
+    <div style="display:flex;flex-wrap:wrap;gap:6px;padding:0.85rem 1rem;">
+      <span style="background:var(--card2);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--text)">1,5</span>
+      <span style="background:var(--card2);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--text)">2,5</span>
+      <span style="background:var(--card2);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--text)">4</span>
+      <span style="background:var(--card2);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--text)">6</span>
+      <span style="background:var(--card2);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--text)">10</span>
+      <span style="background:var(--card2);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--text)">16</span>
+      <span style="background:var(--card2);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--text)">25</span>
+      <span style="background:var(--card2);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--text)">35</span>
+      <span style="background:var(--card2);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--text)">50</span>
+      <span style="background:var(--card2);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--text)">70</span>
+      <span style="background:var(--card2);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--text)">95</span>
+      <span style="background:var(--card2);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--text)">120</span>
+      <span style="background:var(--card2);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--text)">150</span>
+      <span style="background:var(--card2);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--text)">185</span>
+      <span style="background:var(--card2);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:500;color:var(--text)">240</span>
+    </div>
+  </div>
+  <p style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5">
+    Secciones mínimas según ITC-BT-19: 1,5 mm² Cu para alumbrado, 2,5 mm² Cu para fuerza en viviendas.
+  </p>
+
+  <div class="section-title">Tensiones normalizadas (RD 1955/2000)</div>
+  <div class="limits-card">
+    <div class="limits-row" style="grid-template-columns:1fr 1fr">
+      <div class="tipo">Monofásica (fase-neutro)</div>
+      <div class="pct" style="color:var(--accent);text-align:right">230 V</div>
+    </div>
+    <div class="limits-row" style="grid-template-columns:1fr 1fr">
+      <div class="tipo">Trifásica (entre fases)</div>
+      <div class="pct" style="color:var(--accent);text-align:right">400 V</div>
+    </div>
+    <div class="limits-row" style="grid-template-columns:1fr 1fr">
+      <div class="tipo">Tolerancia admitida</div>
+      <div class="pct" style="color:var(--text2);text-align:right">±10%</div>
+    </div>
+  </div>
+
+  <div style="height:2rem"></div>
+</div>
+
+<script>
+const SECCIONES = [1.5,2.5,4,6,10,16,25,35,50,70,95,120,150,185,240];
+const GAMMA = {Cu:56, Al:35};
+const TENSION = {mono:230, tri:400};
+const CDT_DEFAULTS = {der_ind_parcial:0.5, der_ind:1, der_ind_unico:1.5, vivienda:3, alumbrado:3, fuerza:5, ind_alum:4.5, ind_fuerza:6.5};
+const CDT_HINTS = {
+  der_ind_parcial:'ITC-BT-15: ≤0,5% — contadores concentrados en más de un lugar',
+  der_ind:'ITC-BT-15: ≤1% — contadores totalmente concentrados',
+  der_ind_unico:'ITC-BT-15: ≤1,5% — suministro único usuario sin LGA',
+  vivienda:'ITC-BT-19: ≤3% en viviendas, oficinas y locales',
+  alumbrado:'ITC-BT-19: ≤3% para alumbrado interior y exterior',
+  fuerza:'ITC-BT-19: ≤5% para fuerza / motores (no vivienda)',
+  ind_alum:'ITC-BT-19: ≤4,5% alumbrado en industrial con trafo propio AT',
+  ind_fuerza:'ITC-BT-19: ≤6,5% fuerza en industrial con trafo propio AT'
+};
+
+let modoCalculo = 'seccion';
+let deferredInstall = null;
+let cdtIsManual = false;  // tracks if user has overridden the auto value
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstall = e;
+  document.getElementById('installBanner').classList.remove('hidden');
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').classList.add('hidden');
+  deferredInstall = null;
+});
+
+function installApp() {
+  if(deferredInstall) {
+    deferredInstall.prompt();
+    deferredInstall.userChoice.then(() => { deferredInstall = null; });
+  }
+}
+
+function setTab(t) {
+  ['calc','cc','bat','inf','ref'].forEach(id => {
+    document.getElementById('panel-'+id).classList.toggle('hidden', t!==id);
+    const btn = document.getElementById('tab-'+id);
+    if(btn) btn.classList.toggle('active', t===id);
+  });
+  if(t==='inf') renderInforme();
+}
+
+function setSubTab(modo) {
+  modoCalculo = modo;
+  document.getElementById('subtab-sec').classList.toggle('active', modo==='seccion');
+  document.getElementById('subtab-cdt').classList.toggle('active', modo==='cdt');
+  const sf = document.getElementById('seccion-field');
+  const sh = document.getElementById('seccion-hint');
+  const rl = document.getElementById('r-sec-label');
+  if(modo==='cdt') {
+    sf.style.opacity='1';
+    sh.textContent='Sección del conductor instalado';
+    rl.textContent='Sección usada';
+  } else {
+    sf.style.opacity='0.4';
+    sh.textContent='Se calcula automáticamente';
+    rl.textContent='Sección mínima';
+  }
+}
+
+function onSistemaChange() {
+  fillPresetPotencia(document.getElementById('sistema').value);
+  recalcIntensidad();
+}
+
+function onPotenciaChange() { recalcIntensidad(); }
+
+function recalcIntensidad() {
+  const P = parseFloat(document.getElementById('potencia').value)||0;
+  const cp = parseFloat(document.getElementById('cosphi').value)||1;
+  const sis = document.getElementById('sistema').value;
+  const U = TENSION[sis];
+  const I = sis==='mono' ? P/(U*cp) : P/(Math.sqrt(3)*U*cp);
+  document.getElementById('intensidad').value = isFinite(I) ? I.toFixed(2) : '0.00';
+}
+
+function onUsoChange() {
+  const uso = document.getElementById('uso').value;
+  document.getElementById('hint-cdt').textContent = CDT_HINTS[uso];
+  if(!cdtIsManual) {
+    document.getElementById('cdtMax').value = CDT_DEFAULTS[uso];
+  }
+  updateCdtBadge();
+}
+
+function onCdtMaxManual() {
+  const uso = document.getElementById('uso').value;
+  const autoVal = CDT_DEFAULTS[uso];
+  const currentVal = parseFloat(document.getElementById('cdtMax').value);
+  cdtIsManual = (currentVal !== autoVal);
+  updateCdtBadge();
+}
+
+function resetCdtAuto() {
+  cdtIsManual = false;
+  const uso = document.getElementById('uso').value;
+  document.getElementById('cdtMax').value = CDT_DEFAULTS[uso];
+  updateCdtBadge();
+}
+
+function updateCdtBadge() {
+  const badge = document.getElementById('cdt-auto-badge');
+  const note = document.getElementById('cdt-manual-note');
+  if(cdtIsManual) {
+    badge.textContent = 'MANUAL';
+    badge.style.background = 'rgba(245,158,11,0.15)';
+    badge.style.color = 'var(--warn)';
+    note.style.display = 'flex';
+  } else {
+    badge.textContent = 'AUTO';
+    badge.style.background = 'rgba(79,142,247,0.15)';
+    badge.style.color = 'var(--accent)';
+    note.style.display = 'none';
+  }
+}
+
+function secNorm(s) {
+  for(const sn of SECCIONES) if(sn >= s) return sn;
+  return SECCIONES[SECCIONES.length-1];
+}
+
+function calcular() {
+  const sis = document.getElementById('sistema').value;
+  const cond = document.getElementById('conductor').value;
+  const P = parseFloat(document.getElementById('potencia').value)||0;
+  const cp = parseFloat(document.getElementById('cosphi').value)||1;
+  const I = parseFloat(document.getElementById('intensidad').value)||0;
+  const L = parseFloat(document.getElementById('longitud').value)||0;
+  const cdtMaxPct = parseFloat(document.getElementById('cdtMax').value)||3;
+  const U = TENSION[sis];
+  const g = GAMMA[cond];
+  const k = sis==='mono' ? 2 : Math.sqrt(3);
+  const dUmax = (cdtMaxPct/100)*U;
+
+  let sCalc, sUsada, cdtV, cdtPct;
+
+  sCalc = (k*L*I*cp)/(g*dUmax);
+
+  if(modoCalculo==='seccion') {
+    sUsada = secNorm(sCalc);
+  } else {
+    sUsada = parseFloat(document.getElementById('seccion').value);
+  }
+
+  cdtV = (k*L*I*cp)/(g*sUsada);
+  cdtPct = (cdtV/U)*100;
+
+  const cumple = cdtPct <= cdtMaxPct;
+  const nearLimit = cdtPct > cdtMaxPct*0.85;
+
+  // Update metrics
+  const colorClass = cumple ? (nearLimit?'warn':'ok') : 'err';
+  document.getElementById('r-cdt').textContent = cdtPct.toFixed(2);
+  document.getElementById('r-cdt').className = 'metric-value '+colorClass;
+  document.getElementById('r-v').textContent = cdtV.toFixed(2);
+  document.getElementById('r-sec').textContent = sUsada;
+
+  // Status bar
+  const sb = document.getElementById('status-bar');
+  sb.classList.remove('hidden','ok','warn','err');
+  if(cumple) {
+    sb.classList.add(nearLimit?'warn':'ok');
+    document.getElementById('status-icon').textContent = nearLimit ? '⚠️' : '✅';
+    document.getElementById('status-msg').textContent = cumple && nearLimit
+      ? `Cumple, pero cerca del límite: ${cdtPct.toFixed(2)}% ≤ ${cdtMaxPct}%`
+      : `Cumple ITC-BT-19 · CDT ${cdtPct.toFixed(2)}% ≤ ${cdtMaxPct}% admisible`;
+  } else {
+    sb.classList.add('err');
+    document.getElementById('status-icon').textContent = '❌';
+    document.getElementById('status-msg').textContent = `No cumple · CDT ${cdtPct.toFixed(2)}% > ${cdtMaxPct}% admisible`;
+  }
+
+  // Detail table
+  document.getElementById('detail-card').style.display='block';
+  document.getElementById('d-sistema').textContent = sis==='mono'?'Monofásico':'Trifásico';
+  document.getElementById('d-tension').textContent = U+' V';
+  document.getElementById('d-pot').textContent = P.toLocaleString('es')+' W';
+  document.getElementById('d-int').textContent = I.toFixed(2)+' A';
+  document.getElementById('d-cosphi').textContent = cp.toFixed(2);
+  document.getElementById('d-long').textContent = L+' m';
+  document.getElementById('d-cond').textContent = (cond==='Cu'?'Cobre':'Aluminio')+' / γ='+g+' m/Ω·mm²';
+  document.getElementById('d-scalc').textContent = sCalc.toFixed(4)+' mm²';
+  document.getElementById('d-snorm').textContent = sUsada+' mm²';
+  document.getElementById('d-cdtnorm').textContent = cdtPct.toFixed(3)+'%  ('+cdtV.toFixed(3)+' V)';
+  document.getElementById('d-cdtmax').textContent = cdtMaxPct+'%';
+  const dc = document.getElementById('d-cumple');
+  dc.textContent = cumple ? '✔ Sí' : '✘ No';
+  dc.className = 'detail-val '+(cumple?'ok':'err');
+
+  document.getElementById('results-area').scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  // Save for informe
+  lastCalc = { sis, cond, P, cp, I, L, cdtMaxPct, U, g, k, dUmax, sCalc, sUsada, cdtV, cdtPct, uso: document.getElementById('uso').value, modo: modoCalculo };
+  // Set today's date if not already set
+  const fechaEl = document.getElementById('inf-fecha');
+  if(fechaEl && !fechaEl.value) fechaEl.value = new Date().toISOString().split('T')[0];
+  // Show informe content
+  document.getElementById('inf-empty').style.display='none';
+  document.getElementById('inf-content').style.display='block';
+}
+
+
+// Potencias normalizadas por intensidad (IEC 60898) — cosφ=1
+// Monofásico: P = 230 × I  |  Trifásico: P = √3 × 400 × I
+const POTENCIAS_PRESET = {
+  mono: [
+    { label: '10 A — 2.300 W',  value: 2300  },
+    { label: '16 A — 3.680 W',  value: 3680  },
+    { label: '20 A — 4.600 W',  value: 4600  },
+    { label: '25 A — 5.750 W',  value: 5750  },
+    { label: '32 A — 7.360 W',  value: 7360  },
+    { label: '40 A — 9.200 W',  value: 9200  },
+    { label: '50 A — 11.500 W', value: 11500 },
+    { label: '63 A — 14.490 W', value: 14490 },
+  ],
+  tri: [
+    { label: '10 A — 6.928 W',  value: 6928  },
+    { label: '16 A — 11.085 W', value: 11085 },
+    { label: '20 A — 13.856 W', value: 13856 },
+    { label: '25 A — 17.321 W', value: 17321 },
+    { label: '32 A — 22.170 W', value: 22170 },
+    { label: '40 A — 27.713 W', value: 27713 },
+    { label: '50 A — 34.641 W', value: 34641 },
+    { label: '63 A — 43.648 W', value: 43648 },
+  ]
+};
+
+function fillPresetPotencia(sis) {
+  const sel = document.getElementById('potencia-preset');
+  sel.innerHTML = '<option value="" disabled selected>Predef.</option>';
+  POTENCIAS_PRESET[sis].forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.value;
+    opt.textContent = p.label;
+    if(p.disabled) { opt.disabled = true; opt.style.color = 'var(--text3)'; opt.style.fontWeight = '600'; }
+    sel.appendChild(opt);
+  });
+}
+
+function onPresetPotencia() {
+  const val = document.getElementById('potencia-preset').value;
+  if(val === '' || val === 'disabled') return;
+  document.getElementById('potencia').value = val;
+  // Reset select back to placeholder
+  document.getElementById('potencia-preset').selectedIndex = 0;
+  onPotenciaChange();
+}
+
+// ===== CALCULADORA CC FOTOVOLTAICA =====
+const CC_TRAMO_LABELS = {
+  string:     'String / ramal (panel → caja de strings)',
+  string_inv: 'String directo a inversor (panel → inversor)',
+  paralelo:   'Paralelo / principal (caja de strings → inversor)'
+};
+const CC_CDT_DEFAULTS = { string: 1.5, string_inv: 1.5, paralelo: 1.5 };
+let ccModoCalculo = 'seccion';
+let ccCdtIsManual = false;
+
+function setCcSubTab(modo) {
+  ccModoCalculo = modo;
+  document.getElementById('cc-subtab-sec').classList.toggle('active', modo==='seccion');
+  document.getElementById('cc-subtab-cdt').classList.toggle('active', modo==='cdt');
+  document.getElementById('cc-r-sec-label').textContent = modo==='seccion' ? 'Sección mínima' : 'Sección usada';
+}
+
+function onCcTramoChange() {
+  const tramo = 'string';
+  if(!ccCdtIsManual) document.getElementById('cc-cdtmax').value = CC_CDT_DEFAULTS[tramo];
+  updateCcCdtBadge();
+}
+
+function calcCcDerived() {
+  const vmppPanel = parseFloat(document.getElementById('cc-vmpp-panel').value) || 0;
+  const imppPanel = parseFloat(document.getElementById('cc-impp-panel').value) || 0;
+  const nserie    = parseInt(document.getElementById('cc-nserie').value)    || 1;
+  const nparalelo = parseInt(document.getElementById('cc-nparalelo').value) || 1;
+  const vmppStr   = vmppPanel * nserie;
+  const imppTot   = imppPanel * nparalelo;
+  document.getElementById('cc-vmpp').value     = vmppStr.toFixed(1);
+  document.getElementById('cc-impp').value     = imppTot.toFixed(2);
+  document.getElementById('cc-potencia').value = (vmppStr * imppTot).toFixed(0);
+  document.getElementById('cc-icalc').value    = (imppTot * 1.25).toFixed(2);
+}
+
+function onCcCdtManual() {
+  const tramo = 'string';
+  ccCdtIsManual = (parseFloat(document.getElementById('cc-cdtmax').value) !== CC_CDT_DEFAULTS[tramo]);
+  updateCcCdtBadge();
+}
+
+function resetCcCdtAuto() {
+  ccCdtIsManual = false;
+  document.getElementById('cc-cdtmax').value = CC_CDT_DEFAULTS['string'];
+  updateCcCdtBadge();
+}
+
+function updateCcCdtBadge() {
+  const badge = document.getElementById('cc-cdt-badge');
+  const note  = document.getElementById('cc-cdt-manual-note');
+  if(ccCdtIsManual) {
+    badge.textContent='MANUAL'; badge.style.background='rgba(154,103,0,0.12)'; badge.style.color='var(--warn)'; note.style.display='flex';
+  } else {
+    badge.textContent='AUTO'; badge.style.background='rgba(110,127,50,0.12)'; badge.style.color='var(--olive)'; note.style.display='none';
+  }
+}
+
+function calcularCC() {
+  const tramo     = 'string';
+  const cond      = document.getElementById('cc-cond').value;
+  const vmpp      = parseFloat(document.getElementById('cc-vmpp').value)     || 0;
+  const imppTot   = parseFloat(document.getElementById('cc-impp').value)     || 0;
+  const icalc     = parseFloat(document.getElementById('cc-icalc').value)    || 0;
+  const L         = parseFloat(document.getElementById('cc-longitud').value) || 0;
+  const cdtMaxPct = parseFloat(document.getElementById('cc-cdtmax').value)   || 1.5;
+  const nserie    = parseInt(document.getElementById('cc-nserie').value)     || 1;
+  const nparalelo = parseInt(document.getElementById('cc-nparalelo').value)  || 1;
+  const vmppPanel = parseFloat(document.getElementById('cc-vmpp-panel').value) || 0;
+  const imppPanel = parseFloat(document.getElementById('cc-impp-panel').value) || 0;
+  const g         = GAMMA[cond];
+  const dVmax     = (cdtMaxPct / 100) * vmpp;
+
+  const sCalc  = (2 * L * icalc) / (g * dVmax);
+  const sUsada = ccModoCalculo === 'seccion'
+    ? secNorm(sCalc)
+    : parseFloat(document.getElementById('cc-seccion').value);
+  const cdtV   = (2 * L * icalc) / (g * sUsada);
+  const cdtPct = (cdtV / vmpp) * 100;
+
+  const cumple    = cdtPct <= cdtMaxPct;
+  const nearLimit = cdtPct > cdtMaxPct * 0.85;
+  const colorClass = cumple ? (nearLimit ? 'warn' : 'ok') : 'err';
+
+  document.getElementById('cc-r-cdt').textContent = cdtPct.toFixed(2);
+  document.getElementById('cc-r-cdt').className   = 'metric-value ' + colorClass;
+  document.getElementById('cc-r-v').textContent   = cdtV.toFixed(3);
+  document.getElementById('cc-r-sec').textContent = sUsada;
+
+  const sb = document.getElementById('cc-status-bar');
+  sb.classList.remove('hidden','ok','warn','err');
+  sb.classList.add(cumple ? (nearLimit ? 'warn' : 'ok') : 'err');
+  document.getElementById('cc-status-icon').textContent = cumple ? (nearLimit ? '⚠️' : '✅') : '❌';
+  document.getElementById('cc-status-msg').textContent  = cumple
+    ? (nearLimit ? `Cumple, cerca del límite: ${cdtPct.toFixed(2)}% ≤ ${cdtMaxPct}%`
+                 : `Cumple ITC-BT-40 · CDT ${cdtPct.toFixed(2)}% ≤ ${cdtMaxPct}%`)
+    : `No cumple · CDT ${cdtPct.toFixed(2)}% > ${cdtMaxPct}% admisible`;
+
+  document.getElementById('cc-detail-card').style.display = 'block';
+  document.getElementById('cc-d-tramo').textContent   = 'Paneles → Inversor (ITC-BT-40)';
+  document.getElementById('cc-d-vmpp').textContent    = `${vmpp} V  (${vmppPanel} V × ${nserie} paneles en serie)`;
+  document.getElementById('cc-d-impp').textContent    = `${imppTot.toFixed(2)} A  (${imppPanel} A × ${nparalelo} strings en paralelo)`;
+  document.getElementById('cc-d-nstr').textContent    = `${nserie} en serie × ${nparalelo} en paralelo = ${nserie*nparalelo} paneles`;
+  document.getElementById('cc-d-icalc').textContent   = `${icalc.toFixed(3)} A  (${imppTot.toFixed(2)} A × 1,25 — ITC-BT-40)`;
+  document.getElementById('cc-d-long').textContent    = L + ' m  (×2 en fórmula bifilar)';
+  document.getElementById('cc-d-cond').textContent    = (cond==='Cu'?'Cobre':'Aluminio') + ' / γ=' + g + ' m/Ω·mm²';
+  document.getElementById('cc-d-scalc').textContent   = sCalc.toFixed(4) + ' mm²';
+  document.getElementById('cc-d-snorm').textContent   = sUsada + ' mm²';
+  document.getElementById('cc-d-cdtnorm').textContent = `${cdtPct.toFixed(3)}%  (${cdtV.toFixed(3)} V)`;
+  document.getElementById('cc-d-cdtmax').textContent  = cdtMaxPct + '%';
+  const dc = document.getElementById('cc-d-cumple');
+  dc.textContent = cumple ? '✔ Sí' : '✘ No';
+  dc.className   = 'detail-val ' + (cumple ? 'ok' : 'err');
+
+  document.getElementById('cc-results-area').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+// Init CC (deferred to after DOM ready — called from main init block)
+
+// ===== BATERÍAS — INVERSOR =====
+let batModoCalculo = 'seccion';
+let batCdtIsManual = false;
+
+function setBatSubTab(modo) {
+  batModoCalculo = modo;
+  document.getElementById('bat-subtab-sec').classList.toggle('active', modo==='seccion');
+  document.getElementById('bat-subtab-cdt').classList.toggle('active', modo==='cdt');
+  document.getElementById('bat-r-sec-label').textContent = modo==='seccion' ? 'Sección mínima' : 'Sección usada';
+}
+
+function getBatVnom() {
+  const sel = document.getElementById('bat-tension').value;
+  if(sel === 'custom') return parseFloat(document.getElementById('bat-tension-custom').value) || 48;
+  return parseFloat(sel);
+}
+
+function onBatTipoChange() {
+  const tipo = document.getElementById('bat-tipo').value;
+  const hints = {
+    aislado: 'Sistemas con batería como única fuente — sin inyección a red',
+    hibrido: 'Inversores híbridos con red + batería — autoconsumo con almacenamiento'
+  };
+  document.getElementById('bat-tipo-hint').textContent = hints[tipo];
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const sel = document.getElementById('bat-tension');
+  if(sel) sel.addEventListener('change', function() {
+    document.getElementById('bat-tension-custom-wrap').style.display =
+      this.value === 'custom' ? 'block' : 'none';
+    calcBatDerived();
+  });
+});
+
+function calcBatDerived() {
+  const P    = parseFloat(document.getElementById('bat-potencia').value) || 0;
+  const eta  = (parseFloat(document.getElementById('bat-rend').value) || 95) / 100;
+  const Vbat = getBatVnom();
+  const inom = P / (Vbat * eta);
+  const icalc = inom * 1.25;
+  document.getElementById('bat-inom').value  = inom.toFixed(2);
+  document.getElementById('bat-icalc').value = icalc.toFixed(2);
+}
+
+function onBatCdtManual() {
+  batCdtIsManual = (parseFloat(document.getElementById('bat-cdtmax').value) !== 1);
+  updateBatCdtBadge();
+}
+
+function resetBatCdtAuto() {
+  batCdtIsManual = false;
+  document.getElementById('bat-cdtmax').value = 1;
+  updateBatCdtBadge();
+}
+
+function updateBatCdtBadge() {
+  const badge = document.getElementById('bat-cdt-badge');
+  const note  = document.getElementById('bat-cdt-manual-note');
+  if(batCdtIsManual) {
+    badge.textContent='MANUAL'; badge.style.background='rgba(154,103,0,0.12)'; badge.style.color='var(--warn)'; note.style.display='flex';
+  } else {
+    badge.textContent='AUTO'; badge.style.background='rgba(110,127,50,0.12)'; badge.style.color='var(--olive)'; note.style.display='none';
+  }
+}
+
+function calcularBat() {
+  const P        = parseFloat(document.getElementById('bat-potencia').value)  || 0;
+  const eta      = (parseFloat(document.getElementById('bat-rend').value) || 95) / 100;
+  const Vbat     = getBatVnom();
+  const cond     = document.getElementById('bat-cond').value;
+  const L        = parseFloat(document.getElementById('bat-longitud').value)  || 0;
+  const cdtMaxPct= parseFloat(document.getElementById('bat-cdtmax').value)    || 1;
+  const tipo     = document.getElementById('bat-tipo').value;
+  const g        = GAMMA[cond];
+  const inom     = P / (Vbat * eta);
+  const icalc    = inom * 1.25;
+  const dVmax    = (cdtMaxPct / 100) * Vbat;
+
+  const sCalc  = (2 * L * icalc) / (g * dVmax);
+  const sUsada = batModoCalculo === 'seccion'
+    ? secNorm(sCalc)
+    : parseFloat(document.getElementById('bat-seccion').value);
+  const cdtV   = (2 * L * icalc) / (g * sUsada);
+  const cdtPct = (cdtV / Vbat) * 100;
+
+  const cumple    = cdtPct <= cdtMaxPct;
+  const nearLimit = cdtPct > cdtMaxPct * 0.85;
+  const colorClass= cumple ? (nearLimit ? 'warn' : 'ok') : 'err';
+
+  document.getElementById('bat-r-cdt').textContent = cdtPct.toFixed(2);
+  document.getElementById('bat-r-cdt').className   = 'metric-value ' + colorClass;
+  document.getElementById('bat-r-v').textContent   = cdtV.toFixed(3);
+  document.getElementById('bat-r-sec').textContent = sUsada;
+
+  const sb = document.getElementById('bat-status-bar');
+  sb.classList.remove('hidden','ok','warn','err');
+  sb.classList.add(cumple ? (nearLimit ? 'warn' : 'ok') : 'err');
+  document.getElementById('bat-status-icon').textContent = cumple ? (nearLimit ? '⚠️' : '✅') : '❌';
+  document.getElementById('bat-status-msg').textContent  = cumple
+    ? (nearLimit ? `Cumple, cerca del límite: ${cdtPct.toFixed(2)}% ≤ ${cdtMaxPct}%`
+                 : `Cumple · CDT ${cdtPct.toFixed(2)}% ≤ ${cdtMaxPct}%`)
+    : `No cumple · CDT ${cdtPct.toFixed(2)}% > ${cdtMaxPct}% admisible`;
+
+  const tipoLabel = tipo === 'aislado' ? 'Aislado (off-grid)' : 'Híbrido (red + batería)';
+  document.getElementById('bat-detail-card').style.display = 'block';
+  document.getElementById('bat-d-tipo').textContent    = tipoLabel;
+  document.getElementById('bat-d-pot').textContent     = P.toLocaleString('es') + ' W';
+  document.getElementById('bat-d-rend').textContent    = (eta*100).toFixed(1) + '%';
+  document.getElementById('bat-d-vbat').textContent    = Vbat + ' V';
+  document.getElementById('bat-d-inom').textContent    = inom.toFixed(3) + ' A  (P / V·η)';
+  document.getElementById('bat-d-icalc').textContent   = icalc.toFixed(3) + ' A  (I<sub>nom</sub> × 1,25 — ITC-BT-40)';
+  document.getElementById('bat-d-long').textContent    = L + ' m  (×2 bifilar)';
+  document.getElementById('bat-d-cond').textContent    = (cond==='Cu'?'Cobre':'Aluminio') + ' / γ=' + g + ' m/Ω·mm²';
+  document.getElementById('bat-d-scalc').textContent   = sCalc.toFixed(4) + ' mm²';
+  document.getElementById('bat-d-snorm').textContent   = sUsada + ' mm²';
+  document.getElementById('bat-d-cdtnorm').textContent = `${cdtPct.toFixed(3)}%  (${cdtV.toFixed(3)} V)`;
+  document.getElementById('bat-d-cdtmax').textContent  = cdtMaxPct + '%';
+  const dc = document.getElementById('bat-d-cumple');
+  dc.textContent = cumple ? '✔ Sí' : '✘ No';
+  dc.className   = 'detail-val ' + (cumple ? 'ok' : 'err');
+
+  document.getElementById('bat-results-area').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+// Init bat
+onBatTipoChange();
+setBatSubTab('seccion');
+updateBatCdtBadge();
+calcBatDerived();
+
+let lastCalc = null;
+
+const USO_LABELS = {
+  der_ind_parcial: 'D.I. — Contadores parcialmente concentrados',
+  der_ind: 'D.I. — Contadores totalmente concentrados',
+  der_ind_unico: 'D.I. — Único usuario sin LGA',
+  vivienda: 'Vivienda / oficina / local',
+  alumbrado: 'Alumbrado interior o exterior',
+  fuerza: 'Fuerza / motor (no vivienda)',
+  ind_alum: 'Industrial (trafo propio) — alumbrado',
+  ind_fuerza: 'Industrial (trafo propio) — fuerza'
+};
+const ITC_LABELS = {
+  der_ind_parcial: 'ITC-BT-15',
+  der_ind: 'ITC-BT-15',
+  der_ind_unico: 'ITC-BT-15',
+  vivienda: 'ITC-BT-19',
+  alumbrado: 'ITC-BT-19',
+  fuerza: 'ITC-BT-19',
+  ind_alum: 'ITC-BT-19',
+  ind_fuerza: 'ITC-BT-19'
+};
+
+function renderInforme() {
+  if(!lastCalc) return;
+  const c = lastCalc;
+  const proyecto = document.getElementById('inf-proyecto').value || 'Sin denominación';
+  const ref = document.getElementById('inf-ref').value || '—';
+  const fecha = document.getElementById('inf-fecha').value ? new Date(document.getElementById('inf-fecha').value+'T12:00').toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'}) : new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'});
+  const autor = document.getElementById('inf-autor').value || '—';
+  const obs = document.getElementById('inf-obs').value || '';
+
+  const kLabel = c.sis==='mono' ? '2 (factor monofásico)' : '√3 (factor trifásico)';
+  const kVal = c.sis==='mono' ? '2' : '√3';
+  const cumple = c.cdtPct <= c.cdtMaxPct;
+  const verdictClass = cumple ? 'ok' : 'err';
+  const verdictIcon = cumple ? '✔' : '✘';
+  const verdictText = cumple
+    ? `CUMPLE — La caída de tensión obtenida (${c.cdtPct.toFixed(3)}%) es inferior al límite admisible (${c.cdtMaxPct}%) según ${ITC_LABELS[c.uso]}.`
+    : `NO CUMPLE — La caída de tensión obtenida (${c.cdtPct.toFixed(3)}%) supera el límite admisible (${c.cdtMaxPct}%) según ${ITC_LABELS[c.uso]}.`;
+
+  // Step-by-step calculation
+  let step1Formula, step2Formula, step3Formula, step4Formula, step5Formula;
+
+  if(c.modo==='seccion') {
+    step1Formula = `ΔU<sub>max</sub> = CDT<sub>max</sub> / 100 × U = ${c.cdtMaxPct} / 100 × ${c.U} = <strong>${c.dUmax.toFixed(3)} V</strong>`;
+    step2Formula = `I = P / (${c.sis==='mono'?'U':'√3 · U'} · cosφ) = ${c.P} / (${c.sis==='mono'?c.U:'√3 · '+c.U} × ${c.cp}) = <strong>${c.I.toFixed(3)} A</strong>`;
+    step3Formula = `S = (${kVal} · L · I · cosφ) / (γ · ΔU<sub>max</sub>) = (${kVal} × ${c.L} × ${c.I.toFixed(3)} × ${c.cp}) / (${c.g} × ${c.dUmax.toFixed(3)}) = <strong>${c.sCalc.toFixed(4)} mm²</strong>`;
+    step4Formula = `Sección normalizada comercial superior: <strong>${c.sUsada} mm²</strong>`;
+    step5Formula = `CDT (V) = (${kVal} · L · I · cosφ) / (γ · S) = (${kVal} × ${c.L} × ${c.I.toFixed(3)} × ${c.cp}) / (${c.g} × ${c.sUsada}) = <strong>${c.cdtV.toFixed(4)} V</strong><br>CDT (%) = CDT(V) / U × 100 = ${c.cdtV.toFixed(4)} / ${c.U} × 100 = <strong>${c.cdtPct.toFixed(4)} %</strong>`;
+  } else {
+    step1Formula = `I = P / (${c.sis==='mono'?'U':'√3 · U'} · cosφ) = ${c.P} / (${c.sis==='mono'?c.U:'√3 · '+c.U} × ${c.cp}) = <strong>${c.I.toFixed(3)} A</strong>`;
+    step2Formula = `CDT (V) = (${kVal} · L · I · cosφ) / (γ · S) = (${kVal} × ${c.L} × ${c.I.toFixed(3)} × ${c.cp}) / (${c.g} × ${c.sUsada}) = <strong>${c.cdtV.toFixed(4)} V</strong>`;
+    step3Formula = `CDT (%) = CDT(V) / U × 100 = ${c.cdtV.toFixed(4)} / ${c.U} × 100 = <strong>${c.cdtPct.toFixed(4)} %</strong>`;
+    step4Formula = `Límite admisible: <strong>${c.cdtMaxPct} %</strong> según ${ITC_LABELS[c.uso]} para "${USO_LABELS[c.uso]}"`;
+    step5Formula = `${c.cdtPct.toFixed(4)}% ${cumple ? '≤' : '>'} ${c.cdtMaxPct}% → <strong>${cumple?'CUMPLE':'NO CUMPLE'}</strong>`;
+  }
+
+  document.getElementById('inf-preview').innerHTML = `
+    <div class="inf-header">
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+        <img src="${document.querySelector('.app-logo').src}" alt="iEnergies" style="height:40px;width:auto;max-width:220px;object-fit:contain;object-position:left center;display:block">
+        <div>
+          <div class="inf-title">${proyecto}</div>
+          <div class="inf-subtitle">Cálculo de Caída de Tensión — ${ITC_LABELS[c.uso]} · REBT</div>
+        </div>
+      </div>
+      <div class="inf-header-meta">
+        <div><strong>Ref.:</strong> ${ref}</div>
+        <div><strong>Fecha:</strong> ${fecha}</div>
+        <div><strong>Técnico:</strong> ${autor}</div>
+      </div>
+    </div>
+
+    <div class="inf-section">1. Datos de la instalación</div>
+    <table class="inf-table">
+      <tr><td>Sistema eléctrico</td><td>${c.sis==='mono'?'Monofásico':'Trifásico'} — ${c.U} V</td></tr>
+      <tr><td>Tipo de instalación</td><td>${USO_LABELS[c.uso]} (${ITC_LABELS[c.uso]})</td></tr>
+      <tr><td>Modo de cálculo</td><td>${c.modo==='seccion'?'Cálculo de sección mínima por CDT':'Cálculo de CDT para sección conocida'}</td></tr>
+    </table>
+
+    <div class="inf-section">2. Datos del circuito</div>
+    <table class="inf-table">
+      <tr><td>Potencia prevista (P)</td><td>${c.P.toLocaleString('es')} W</td></tr>
+      <tr><td>Factor de potencia (cosφ)</td><td>${c.cp}</td></tr>
+      <tr><td>Intensidad de línea (I)</td><td>${c.I.toFixed(3)} A</td></tr>
+      <tr><td>Longitud del circuito (L)</td><td>${c.L} m (sólo ida)</td></tr>
+      <tr><td>Material conductor</td><td>${c.cond==='Cu'?'Cobre (Cu)':'Aluminio (Al)'}</td></tr>
+      <tr><td>Conductividad a 20 °C (γ)</td><td>${c.g} m/Ω·mm²</td></tr>
+      <tr><td>CDT máxima admisible</td><td>${c.cdtMaxPct} %</td></tr>
+    </table>
+
+    <div class="inf-section">3. Desarrollo del cálculo</div>
+    ${c.modo==='seccion'?`
+    <div class="inf-step">
+      <div class="inf-step-num">Paso 1 — Caída de tensión máxima en voltios</div>
+      <div class="inf-step-formula">${step1Formula}</div>
+    </div>
+    <div class="inf-step">
+      <div class="inf-step-num">Paso 2 — Intensidad de línea</div>
+      <div class="inf-step-formula">${step2Formula}</div>
+    </div>
+    <div class="inf-step">
+      <div class="inf-step-num">Paso 3 — Sección mínima teórica por criterio de CDT</div>
+      <div class="inf-step-formula">S = (${kVal} · L · I · cosφ) / (γ · ΔU<sub>max</sub>)</div>
+      <div class="inf-step-formula">${step3Formula}</div>
+    </div>
+    <div class="inf-step">
+      <div class="inf-step-num">Paso 4 — Sección normalizada adoptada</div>
+      <div class="inf-step-formula">${step4Formula}</div>
+    </div>
+    <div class="inf-step">
+      <div class="inf-step-num">Paso 5 — Caída de tensión real con la sección adoptada</div>
+      <div class="inf-step-formula">${step5Formula}</div>
+    </div>
+    ` : `
+    <div class="inf-step">
+      <div class="inf-step-num">Paso 1 — Intensidad de línea</div>
+      <div class="inf-step-formula">${step1Formula}</div>
+    </div>
+    <div class="inf-step">
+      <div class="inf-step-num">Paso 2 — Caída de tensión en voltios con S = ${c.sUsada} mm²</div>
+      <div class="inf-step-formula">CDT (V) = (${kVal} · L · I · cosφ) / (γ · S)</div>
+      <div class="inf-step-formula">${step2Formula}</div>
+    </div>
+    <div class="inf-step">
+      <div class="inf-step-num">Paso 3 — Caída de tensión en porcentaje</div>
+      <div class="inf-step-formula">${step3Formula}</div>
+    </div>
+    <div class="inf-step">
+      <div class="inf-step-num">Paso 4 — Límite normativo aplicable</div>
+      <div class="inf-step-formula">${step4Formula}</div>
+    </div>
+    <div class="inf-step">
+      <div class="inf-step-num">Paso 5 — Verificación</div>
+      <div class="inf-step-formula">${step5Formula}</div>
+    </div>
+    `}
+
+    <div class="inf-section">4. Resultados</div>
+    <table class="inf-table">
+      ${c.modo==='seccion'?`<tr><td>Sección teórica calculada</td><td>${c.sCalc.toFixed(4)} mm²</td></tr><tr><td>Sección normalizada adoptada</td><td><strong>${c.sUsada} mm²</strong></td></tr>`:`<tr><td>Sección del conductor</td><td>${c.sUsada} mm²</td></tr>`}
+      <tr><td>Caída de tensión (V)</td><td>${c.cdtV.toFixed(4)} V</td></tr>
+      <tr><td>Caída de tensión (%)</td><td>${c.cdtPct.toFixed(4)} %</td></tr>
+      <tr><td>Límite admisible</td><td>${c.cdtMaxPct} %</td></tr>
+    </table>
+
+    <div class="inf-verdict ${verdictClass}">${verdictIcon} ${verdictText}</div>
+
+    ${obs ? `<div style="margin-top:1rem;font-size:12px;color:var(--text2)"><strong>Observaciones:</strong> ${obs}</div>` : ''}
+
+    <div class="inf-footer">
+      Calculado con iEnergies CDT REBT · Normativa: REBT RD 842/2002 · ${ITC_LABELS[c.uso]} · UNE 20460 · Tensiones normalizadas RD 1955/2000
+    </div>
+  `;
+}
+
+function imprimirInforme() {
+  window.print();
+}
+
+// Init
+recalcIntensidad();
+setSubTab('seccion');
+updateCdtBadge();
+fillPresetPotencia('mono');
+// Init CC
+onCcTramoChange();
+setCcSubTab('seccion');
+updateCcCdtBadge();
+calcCcDerived();
+
+// Service Worker registration
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>

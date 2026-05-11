@@ -1,0 +1,38 @@
+{
+  "name": "Calculadora Ca\u00edda de Tensi\u00f3n REBT",
+  "short_name": "CDT REBT",
+  "description": "Calculadora de ca\u00edda de tensi\u00f3n seg\u00fan REBT ITC-BT-19 \u2014 normativa el\u00e9ctrica espa\u00f1ola",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f5ee",
+  "theme_color": "#4a5620",
+  "orientation": "any",
+  "lang": "es-ES",
+  "categories": [
+    "utilities",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Calcular secci\u00f3n",
+      "short_name": "Secci\u00f3n",
+      "description": "Calcular secci\u00f3n m\u00ednima por CDT",
+      "url": "./index.html"
+    }
+  ]
+}
